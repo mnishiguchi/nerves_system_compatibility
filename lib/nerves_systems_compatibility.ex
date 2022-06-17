@@ -8,19 +8,19 @@ defmodule NervesSystemsCompatibility do
   @doc """
   Returns registered Nerves System versions.
   """
-  @spec versions :: %{(target :: atom) => [tag :: binary]}
+  @spec versions :: %{(target :: atom) => [version :: binary]}
   def versions, do: Application.fetch_env!(:nerves_systems_compatibility, :versions)
 
-  @spec versions(target :: atom | binary) :: [tag :: binary]
+  @spec versions(target :: atom | binary) :: [version :: binary]
   def versions(target) when is_binary(target), do: versions(String.to_existing_atom(target))
   def versions(target), do: Access.fetch!(versions(), target)
 
   @doc """
   Returns compatibility data for Nerves Systems.
   """
-  @spec get :: %{(target :: atom) => %{(tag :: binary) => %{(key :: binary) => value :: binary}}}
+  @spec get :: %{(target :: atom) => %{(version :: binary) => %{binary => binary}}}
   def get do
-    {%{br: nerves_br_versions}, system_target_to_tags_map} =
+    {%{br: nerves_br_versions}, system_target_to_versions_map} =
       NervesSystemsCompatibility.versions() |> Map.split([:br])
 
     nerves_br_version_to_metadata_map =
@@ -35,23 +35,24 @@ defmodule NervesSystemsCompatibility do
         %{nerves_br_version => nerves_br_metadata} |> Enum.into(acc)
       end)
 
-    system_target_to_tags_map
-    |> Enum.map(fn {target, tags} ->
+    system_target_to_versions_map
+    |> Enum.map(fn {target, versions} ->
       Task.async(fn ->
-        {target, build_target_metadata(target, tags, nerves_br_version_to_metadata_map)}
+        {target, build_target_metadata(target, versions, nerves_br_version_to_metadata_map)}
       end)
     end)
     |> Task.await_many(:timer.seconds(10))
-    |> Enum.reduce(%{}, fn {target, target_tag_to_nerves_br_metadata}, result ->
-      %{target => target_tag_to_nerves_br_metadata} |> Enum.into(result)
+    |> Enum.reduce(%{}, fn {target, target_version_to_nerves_br_metadata}, result ->
+      %{target => target_version_to_nerves_br_metadata} |> Enum.into(result)
     end)
   end
 
-  defp build_target_metadata(target, tags, %{} = nerves_br_version_to_metadata_map) do
-    for tag <- tags, into: %{} do
-      %{"nerves_br" => nerves_br_version} = API.fetch_nerves_br_version_for_target!(target, tag)
+  defp build_target_metadata(target, versions, %{} = nerves_br_version_to_metadata_map) do
+    for version <- versions, into: %{} do
+      %{"nerves_br" => nerves_br_version} =
+        API.fetch_nerves_br_version_for_target!(target, version)
 
-      {tag, nerves_br_version_to_metadata_map |> Access.fetch!(nerves_br_version)}
+      {version, nerves_br_version_to_metadata_map |> Access.fetch!(nerves_br_version)}
     end
   end
 
