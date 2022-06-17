@@ -3,8 +3,6 @@ import Config
 config :nerves_systems_compatibility,
   versions: %{
     otp: [
-      "23.1.1",
-      "23.1.5",
       "23.2.4",
       "23.2.7",
       "23.3.1",

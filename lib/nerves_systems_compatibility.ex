@@ -26,4 +26,12 @@ defmodule NervesSystemsCompatibility do
   defdelegate get_data,
     to: NervesSystemsCompatibility.Data,
     as: :get
+
+  @doc """
+  Converts compatibility data to a markdown table
+  """
+  @spec build_table([%{binary => any}]) :: binary
+  defdelegate build_table(compatibility_data \\ get_data()),
+    to: NervesSystemsCompatibility.Table,
+    as: :build
 end
