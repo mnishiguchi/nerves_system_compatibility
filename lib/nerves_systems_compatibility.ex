@@ -41,24 +41,21 @@ defmodule NervesSystemsCompatibility do
     system_target_to_versions_map
     |> Enum.map(fn {target, versions} ->
       Task.async(fn ->
-        {target, build_target_metadata(target, versions, nerves_br_version_to_metadata_map)}
+        build_target_metadata(target, versions, nerves_br_version_to_metadata_map)
       end)
     end)
     |> Task.await_many(:timer.seconds(10))
-    |> Enum.reduce(%{}, fn {target, target_version_to_nerves_br_metadata}, result ->
-      %{target => target_version_to_nerves_br_metadata} |> Enum.into(result)
-    end)
+    |> Enum.reduce([], fn target_metadata, acc -> target_metadata ++ acc end)
   end
 
   defp build_target_metadata(target, versions, %{} = nerves_br_version_to_metadata_map) do
-    for version <- versions, into: %{} do
+    for version <- versions, into: [] do
       %{"nerves_br" => nerves_br_version} =
         API.fetch_nerves_br_version_for_target!(target, version)
 
-      {version,
-       nerves_br_version_to_metadata_map
-       |> Access.fetch!(nerves_br_version)
-       |> Enum.into(%{"target" => {target, version}})}
+      nerves_br_version_to_metadata_map
+      |> Access.fetch!(nerves_br_version)
+      |> Enum.into(%{"target" => {target, version}})
     end
   end
 
