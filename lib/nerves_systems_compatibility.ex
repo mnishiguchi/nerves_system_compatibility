@@ -15,6 +15,9 @@ defmodule NervesSystemsCompatibility do
   def versions(target) when is_binary(target), do: versions(String.to_existing_atom(target))
   def versions(target), do: Access.fetch!(versions(), target)
 
+  @spec targets :: [atom]
+  def targets, do: Map.keys(versions())
+
   @doc """
   Returns compatibility data for Nerves Systems.
   """
@@ -52,7 +55,10 @@ defmodule NervesSystemsCompatibility do
       %{"nerves_br" => nerves_br_version} =
         API.fetch_nerves_br_version_for_target!(target, version)
 
-      {version, nerves_br_version_to_metadata_map |> Access.fetch!(nerves_br_version)}
+      {version,
+       nerves_br_version_to_metadata_map
+       |> Access.fetch!(nerves_br_version)
+       |> Enum.into(%{"target" => {target, version}})}
     end
   end
 

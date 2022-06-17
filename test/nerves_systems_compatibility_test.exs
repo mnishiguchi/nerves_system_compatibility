@@ -18,7 +18,15 @@ defmodule NervesSystemsCompatibilityTest do
     assert get_in(result, [:rpi0, "1.19.0"]) == %{
              "buildroot" => "2022.02.1",
              "nerves_br" => "1.19.0",
-             "otp" => "25.0"
+             "otp" => "25.0",
+             "target" => {:rpi0, "1.19.0"}
            }
+  end
+
+  test "targets" do
+    result = NervesSystemsCompatibility.targets()
+
+    assert is_list(result)
+    assert :rpi0 in result
   end
 end
