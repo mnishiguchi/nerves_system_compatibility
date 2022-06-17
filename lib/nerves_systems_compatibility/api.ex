@@ -1,4 +1,5 @@
 defmodule NervesSystemsCompatibility.API do
+  @spec fetch_buildroot_version!(binary) :: %{binary => binary}
   def fetch_buildroot_version!(nerves_br_version) do
     %{status: 200, body: create_build_content} =
       Req.get!(
@@ -12,6 +13,7 @@ defmodule NervesSystemsCompatibility.API do
     )
   end
 
+  @spec fetch_otp_version!(binary) :: %{binary => binary}
   def fetch_otp_version!(nerves_br_version) do
     %{status: 200, body: tool_versions_content} =
       Req.get!(
@@ -25,6 +27,7 @@ defmodule NervesSystemsCompatibility.API do
     )
   end
 
+  @spec fetch_nerves_br_version_for_target!(binary | atom, binary) :: binary
   def fetch_nerves_br_version_for_target!(target, tag) do
     %{status: 200, body: mix_lock_content} =
       Req.get!(

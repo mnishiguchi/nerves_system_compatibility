@@ -8,13 +8,17 @@ defmodule NervesSystemsCompatibility do
   @doc """
   Returns registered Nerves System versions.
   """
+  @spec versions :: %{(target :: atom) => [tag :: binary]}
   def versions, do: Application.fetch_env!(:nerves_systems_compatibility, :versions)
+
+  @spec versions(target :: atom | binary) :: [tag :: binary]
   def versions(target) when is_binary(target), do: versions(String.to_existing_atom(target))
   def versions(target), do: Access.fetch!(versions(), target)
 
   @doc """
   Returns compatibility data for Nerves Systems.
   """
+  @spec get :: %{(target :: atom) => %{(tag :: binary) => %{(key :: binary) => value :: binary}}}
   def get do
     {%{br: nerves_br_versions}, system_target_to_tags_map} =
       NervesSystemsCompatibility.versions() |> Map.split([:br])
