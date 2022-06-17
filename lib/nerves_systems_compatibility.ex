@@ -24,7 +24,7 @@ defmodule NervesSystemsCompatibility do
   @spec get :: %{(target :: atom) => %{(version :: binary) => %{binary => binary}}}
   def get do
     {%{br: nerves_br_versions}, system_target_to_versions_map} =
-      NervesSystemsCompatibility.versions() |> Map.split([:br])
+      NervesSystemsCompatibility.versions() |> Map.split([:otp, :br])
 
     nerves_br_version_to_metadata_map =
       nerves_br_versions
