@@ -3,7 +3,7 @@ defmodule NervesSystemsCompatibility do
   Documentation for `NervesSystemsCompatibility`.
   """
 
-  alias NervesSystemsCompatibility.Repo
+  alias NervesSystemsCompatibility.API
 
   @doc """
   Returns registered Nerves System versions.
@@ -12,31 +12,53 @@ defmodule NervesSystemsCompatibility do
   def versions(target) when is_binary(target), do: versions(String.to_existing_atom(target))
   def versions(target), do: Access.fetch!(versions(), target)
 
+  @doc """
+  Returns compatibility data for Nerves Systems.
+  """
   def get do
-    {%{br: system_br_versions}, system_target_to_versions_map} =
+    {%{br: nerves_br_versions}, system_target_to_tags_map} =
       NervesSystemsCompatibility.versions() |> Map.split([:br])
 
-    system_br_version_to_metadata_map =
-      Enum.reduce(system_br_versions, %{}, fn system_br_version, acc ->
-        put_in(
-          acc,
-          [system_br_version],
-          Repo.get_system_br_metadata!(system_br_version)
-        )
+    nerves_br_version_to_metadata_map =
+      nerves_br_versions
+      |> Enum.map(fn nerves_br_version ->
+        Task.async(fn ->
+          {nerves_br_version, nerves_br_version_to_metadata!(nerves_br_version)}
+        end)
+      end)
+      |> Task.await_many(:timer.seconds(10))
+      |> Enum.reduce(%{}, fn {nerves_br_version, nerves_br_metadata}, acc ->
+        %{nerves_br_version => nerves_br_metadata} |> Enum.into(acc)
       end)
 
-    Enum.reduce(system_target_to_versions_map, %{}, fn {target, tags}, result ->
-      target_tag_to_system_br_metadata =
-        Enum.reduce(tags, %{}, fn tag, acc ->
-          %{
-            tag =>
-              system_br_version_to_metadata_map
-              |> Access.fetch!(Repo.get_system_br_version_for_target!(target, tag))
-          }
-          |> Enum.into(acc)
-        end)
+    system_target_to_tags_map
+    |> Enum.map(fn {target, tags} ->
+      Task.async(fn ->
+        {target, build_target_metadata(target, tags, nerves_br_version_to_metadata_map)}
+      end)
+    end)
+    |> Task.await_many(:timer.seconds(10))
+    |> Enum.reduce(%{}, fn {target, target_tag_to_nerves_br_metadata}, result ->
+      %{target => target_tag_to_nerves_br_metadata} |> Enum.into(result)
+    end)
+  end
 
-      put_in(result, [target], target_tag_to_system_br_metadata)
+  defp build_target_metadata(target, tags, %{} = nerves_br_version_to_metadata_map) do
+    for tag <- tags, into: %{} do
+      nerves_br_version = API.fetch_nerves_br_version_for_target!(target, tag)
+
+      {tag, nerves_br_version_to_metadata_map |> Access.fetch!(nerves_br_version)}
+    end
+  end
+
+  defp nerves_br_version_to_metadata!(nerves_br_version) do
+    [
+      Task.async(API, :fetch_buildroot_version!, [nerves_br_version]),
+      Task.async(API, :fetch_otp_version!, [nerves_br_version])
+    ]
+    |> Task.await_many(:timer.seconds(10))
+    |> Enum.reduce(%{"nerves_br" => nerves_br_version}, fn metadata_map, acc ->
+      metadata_map |> Enum.into(acc)
     end)
   end
 end

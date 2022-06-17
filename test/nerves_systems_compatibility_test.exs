@@ -4,7 +4,6 @@ defmodule NervesSystemsCompatibilityTest do
 
   test "versions" do
     result = NervesSystemsCompatibility.versions()
-    IO.inspect(result)
 
     assert is_map(result)
     assert is_list(result[:rpi0])
@@ -12,7 +11,6 @@ defmodule NervesSystemsCompatibilityTest do
 
   test "get" do
     result = NervesSystemsCompatibility.get()
-    IO.inspect(result)
 
     assert is_map(result)
     assert is_map(result[:rpi0])
