@@ -11,6 +11,7 @@ defmodule NervesSystemsCompatibility.API do
       create_build_content,
       include_captures: true
     )
+    |> Enum.into(%{"nerves_br" => nerves_br_version})
   end
 
   @spec fetch_otp_version!(binary) :: %{binary => binary}
@@ -25,6 +26,7 @@ defmodule NervesSystemsCompatibility.API do
       tool_versions_content,
       include_captures: true
     )
+    |> Enum.into(%{"nerves_br" => nerves_br_version})
   end
 
   @spec fetch_nerves_br_version_for_target!(binary | atom, binary) :: binary
@@ -39,6 +41,6 @@ defmodule NervesSystemsCompatibility.API do
       mix_lock_content,
       include_captures: true
     )
-    |> Access.fetch!("nerves_br")
+    |> Enum.into(%{"target" => {target, tag}})
   end
 end

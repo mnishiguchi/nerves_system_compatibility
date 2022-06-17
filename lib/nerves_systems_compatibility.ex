@@ -49,7 +49,7 @@ defmodule NervesSystemsCompatibility do
 
   defp build_target_metadata(target, tags, %{} = nerves_br_version_to_metadata_map) do
     for tag <- tags, into: %{} do
-      nerves_br_version = API.fetch_nerves_br_version_for_target!(target, tag)
+      %{"nerves_br" => nerves_br_version} = API.fetch_nerves_br_version_for_target!(target, tag)
 
       {tag, nerves_br_version_to_metadata_map |> Access.fetch!(nerves_br_version)}
     end
