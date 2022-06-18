@@ -1,9 +1,6 @@
 defmodule NervesSystemsCompatibility.APITest do
   use ExUnit.Case, async: true
-  use ExVCR.Mock, adapter: ExVCR.Adapter.Finch
-  import NervesSystemsCompatibility.TestHelper.ExVCR
-
-  setup [:set_vcr_dir]
+  use NervesSystemsCompatibility.TestHelper.ExVCR
 
   test "fetch_buildroot_version!", context do
     use_cassette cassette_name(context) do

@@ -1,11 +1,8 @@
 defmodule NervesSystemsCompatibility.DataTest do
   use ExUnit.Case, async: true
-  use ExVCR.Mock, adapter: ExVCR.Adapter.Finch
-  import NervesSystemsCompatibility.TestHelper.ExVCR
+  use NervesSystemsCompatibility.TestHelper.ExVCR
 
   alias NervesSystemsCompatibility.Data
-
-  setup [:set_vcr_dir]
 
   test "get_data", context do
     use_cassette cassette_name(context) do

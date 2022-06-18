@@ -1,9 +1,6 @@
 defmodule NervesSystemsCompatibility.TableTest do
   use ExUnit.Case, async: true
-  use ExVCR.Mock, adapter: ExVCR.Adapter.Finch
-  import NervesSystemsCompatibility.TestHelper.ExVCR
-
-  setup [:set_vcr_dir]
+  use NervesSystemsCompatibility.TestHelper.ExVCR
 
   test "build_table", context do
     use_cassette cassette_name(context) do
