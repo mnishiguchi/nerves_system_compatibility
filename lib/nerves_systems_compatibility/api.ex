@@ -1,4 +1,6 @@
 defmodule NervesSystemsCompatibility.API do
+  @moduledoc false
+
   @spec fetch_buildroot_version!(binary) :: %{binary => binary}
   def fetch_buildroot_version!(nerves_br_version) do
     %{status: 200, body: create_build_content} =
@@ -7,11 +9,11 @@ defmodule NervesSystemsCompatibility.API do
       )
 
     Regex.named_captures(
-      ~r/NERVES_BR_VERSION=(?<buildroot>[0-9.]*)/,
+      ~r/NERVES_BR_VERSION=(?<buildroot_version>[0-9.]*)/,
       create_build_content,
       include_captures: true
     )
-    |> Enum.into(%{"nerves_br" => nerves_br_version})
+    |> Enum.into(%{"nerves_br_version" => nerves_br_version})
   end
 
   @spec fetch_otp_version!(binary) :: %{binary => binary}
@@ -22,25 +24,25 @@ defmodule NervesSystemsCompatibility.API do
       )
 
     Regex.named_captures(
-      ~r/erlang (?<otp>[0-9.]*)/,
+      ~r/erlang (?<otp_version>[0-9.]*)/,
       tool_versions_content,
       include_captures: true
     )
-    |> Enum.into(%{"nerves_br" => nerves_br_version})
+    |> Enum.into(%{"nerves_br_version" => nerves_br_version})
   end
 
-  @spec fetch_nerves_br_version_for_target!(binary | atom, binary) :: binary
-  def fetch_nerves_br_version_for_target!(target, tag) do
+  @spec fetch_nerves_br_version_for_target!(binary | atom, binary) :: %{binary => binary}
+  def fetch_nerves_br_version_for_target!(target, target_version) do
     %{status: 200, body: mix_lock_content} =
       Req.get!(
-        "https://raw.githubusercontent.com/nerves-project/nerves_system_#{target}/v#{tag}/mix.lock"
+        "https://raw.githubusercontent.com/nerves-project/nerves_system_#{target}/v#{target_version}/mix.lock"
       )
 
     Regex.named_captures(
-      ~r/:hex, :nerves_system_br, "(?<nerves_br>[0-9.]*)"/,
+      ~r/:hex, :nerves_system_br, "(?<nerves_br_version>[0-9.]*)"/,
       mix_lock_content,
       include_captures: true
     )
-    |> Enum.into(%{"target" => {target, tag}})
+    |> Enum.into(%{"target" => target, "target_version" => target_version})
   end
 end
