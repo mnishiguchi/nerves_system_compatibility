@@ -17,15 +17,24 @@ defmodule NervesSystemsCompatibility.Table do
       data_rows(system_targets, otp_versions, compatibility_data)
     ]
     |> Enum.join("\n")
-    |> Kernel.<>("\n")
   end
 
   defp header_row(targets) when is_list(targets) do
-    "| | " <> (targets |> Enum.join(" | ")) <> " |"
+    [
+      "|",
+      [cell("", 12) | Enum.map(targets, &cell/1)] |> Enum.intersperse("|"),
+      "|"
+    ]
+    |> Enum.join()
   end
 
   defp divider_row(columm_count) when is_integer(columm_count) do
-    "|---|" <> (List.duplicate("---|", columm_count) |> Enum.join(""))
+    [
+      "|",
+      [cell("---", 12) | List.duplicate(cell("---"), columm_count)] |> Enum.intersperse("|"),
+      "|"
+    ]
+    |> Enum.join()
   end
 
   defp data_rows(targets, otp_versions, compatibility_data) do
@@ -45,6 +54,15 @@ defmodule NervesSystemsCompatibility.Table do
   end
 
   defp data_row(otp_version, row_values) when is_list(row_values) do
-    "| OTP #{otp_version} | " <> Enum.join(row_values, " | ") <> " |"
+    [
+      "|",
+      [cell("OTP #{otp_version}", 12) | Enum.map(row_values, &cell/1)] |> Enum.intersperse("|"),
+      "|"
+    ]
+    |> Enum.join()
+  end
+
+  defp cell(value, count \\ 10) do
+    (" " <> to_string(value)) |> String.pad_trailing(count)
   end
 end
