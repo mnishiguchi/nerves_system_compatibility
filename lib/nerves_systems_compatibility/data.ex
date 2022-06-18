@@ -10,8 +10,8 @@ defmodule NervesSystemsCompatibility.Data do
   """
   @spec get :: compatibility_data
   def get do
-    nerves_br_versions = NervesSystemsCompatibility.versions(:br)
-    target_to_versions_map = NervesSystemsCompatibility.versions() |> Map.drop([:otp, :br])
+    nerves_br_versions = NervesSystemsCompatibility.nerves_br_versions()
+    target_to_versions_map = NervesSystemsCompatibility.nerves_system_versions()
 
     nerves_br_version_to_metadata_map =
       nerves_br_versions

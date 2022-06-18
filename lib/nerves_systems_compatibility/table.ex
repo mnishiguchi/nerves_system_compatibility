@@ -9,7 +9,7 @@ defmodule NervesSystemsCompatibility.Table do
   @spec build([%{binary => any}]) :: binary
   def build(compatibility_data) do
     system_targets = NervesSystemsCompatibility.targets()
-    otp_versions = NervesSystemsCompatibility.versions(:otp)
+    otp_versions = NervesSystemsCompatibility.otp_versions()
 
     [
       header_row(system_targets),
