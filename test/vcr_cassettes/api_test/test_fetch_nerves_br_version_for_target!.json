@@ -1,0 +1,47 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "accept-encoding": "gzip",
+        "user-agent": "req/0.2.2"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://raw.githubusercontent.com/nerves-project/nerves_system_rpi0/v1.19.0/mix.lock"
+    },
+    "response": {
+      "binary": true,
+      "body": "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",
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "1570",
+        "cache-control": "max-age=300",
+        "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        "content-type": "text/plain; charset=utf-8",
+        "etag": "W/\"f6fba7486a31ada7d625fb2e260bf2135dcc6279d4229a4cfb5da11d64e50455\"",
+        "strict-transport-security": "max-age=31536000",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "deny",
+        "x-xss-protection": "1; mode=block",
+        "x-github-request-id": "D110:20ED:3E89B1:55AE66:62AD9E1B",
+        "content-encoding": "gzip",
+        "accept-ranges": "bytes",
+        "date": "Sat, 18 Jun 2022 12:35:27 GMT",
+        "via": "1.1 varnish",
+        "x-served-by": "cache-iad-kjyo7100066-IAD",
+        "x-cache": "HIT",
+        "x-cache-hits": "1",
+        "x-timer": "S1655555727.457984,VS0,VE1",
+        "vary": "Authorization,Accept-Encoding,Origin",
+        "access-control-allow-origin": "*",
+        "x-fastly-request-id": "1d4da096ba6d5755af4af07c7dd2a884a48f8c25",
+        "expires": "Sat, 18 Jun 2022 12:40:27 GMT",
+        "source-age": "151"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]
