@@ -4,3 +4,4 @@ import NervesSystemsCompatibility
 alias NervesSystemsCompatibility.API
 alias NervesSystemsCompatibility.Data
 alias NervesSystemsCompatibility.Table
+alias NervesSystemsCompatibility.Version
