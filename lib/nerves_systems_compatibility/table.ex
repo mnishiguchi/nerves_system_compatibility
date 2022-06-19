@@ -40,16 +40,16 @@ defmodule NervesSystemsCompatibility.Table do
   defp data_rows(targets, otp_versions, compatibility_data) do
     grouped_by_otp_and_target = compatibility_data |> Data.group_data_by_otp_and_target()
 
-    otp_versions
-    |> Enum.reduce([], fn otp_version, acc ->
-      grouped_by_target = grouped_by_otp_and_target |> Access.fetch!(otp_version)
+    for otp_version <- otp_versions, reduce: [] do
+      acc ->
+        target_versions =
+          for target <- targets do
+            grouped_by_otp_and_target
+            |> get_in([otp_version, target, "target_version"])
+          end
 
-      target_versions =
-        targets
-        |> Enum.map(&get_in(grouped_by_target, [&1, "target_version"]))
-
-      [data_row(otp_version, target_versions) | acc]
-    end)
+        [data_row(otp_version, target_versions) | acc]
+    end
     |> Enum.join("\n")
   end
 

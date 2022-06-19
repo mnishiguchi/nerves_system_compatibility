@@ -5,13 +5,12 @@ defmodule NervesSystemsCompatibility.Version do
 
   @nerves_system_files Path.join([@versions_dir, "nerves_system_*"]) |> Path.wildcard()
 
-  @targets @nerves_system_files
-           |> Enum.map(fn absolute_path ->
-             absolute_path
-             |> Path.basename()
-             |> String.replace_prefix("nerves_system_", "")
-             |> String.to_atom()
-           end)
+  @targets for file_path <- @nerves_system_files,
+               do:
+                 file_path
+                 |> Path.basename()
+                 |> String.replace_prefix("nerves_system_", "")
+                 |> String.to_atom()
 
   @spec targets :: [atom]
   def targets, do: @targets
@@ -27,18 +26,18 @@ defmodule NervesSystemsCompatibility.Version do
   """
   @spec nerves_system_versions :: keyword([version :: binary])
   def nerves_system_versions do
-    @nerves_system_files
-    |> Enum.reduce([], fn file_path, acc ->
-      [
-        {
-          Path.basename(file_path)
-          |> String.replace_prefix("nerves_system_", "")
-          |> String.to_existing_atom(),
-          read_lines(file_path)
-        }
-        | acc
-      ]
-    end)
+    for file_path <- @nerves_system_files, reduce: [] do
+      acc ->
+        [
+          {
+            Path.basename(file_path)
+            |> String.replace_prefix("nerves_system_", "")
+            |> String.to_existing_atom(),
+            read_lines(file_path)
+          }
+          | acc
+        ]
+    end
     |> Enum.reverse()
   end
 
@@ -54,7 +53,7 @@ defmodule NervesSystemsCompatibility.Version do
   Supplements missing minor and patch values so that the version can be compared.
   """
   def normalize_version(version) do
-    case version |> String.split(".") |> Enum.map(&String.to_integer/1) |> length() do
+    case version |> String.split(".") |> Enum.count(&String.to_integer/1) do
       1 -> version <> ".0.0"
       2 -> version <> ".0"
       3 -> version
