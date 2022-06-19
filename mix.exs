@@ -9,7 +9,7 @@ defmodule NervesSystemsCompatibility.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      dialyzer: dialyzer(),
+      dialyzer: dialyzer()
     ]
   end
 

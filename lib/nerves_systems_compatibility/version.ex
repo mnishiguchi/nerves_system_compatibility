@@ -54,10 +54,11 @@ defmodule NervesSystemsCompatibility.Version do
   Supplements missing minor and patch values so that the version can be compared.
   """
   def normalize_version(version) do
-    case version |> String.split(".") |> length() do
+    case version |> String.split(".") |> Enum.map(&String.to_integer/1) |> length() do
       1 -> version <> ".0.0"
       2 -> version <> ".0"
       3 -> version
+      _ -> raise("invalid version #{inspect(version)}")
     end
   end
 
