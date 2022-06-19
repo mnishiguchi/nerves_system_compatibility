@@ -68,12 +68,25 @@ defmodule NervesSystemsCompatibility.Data do
   def group_data_by_otp_and_target(compatibility_data) do
     compatibility_data
     |> Enum.group_by(&get_in(&1, ["otp_version"]))
-    |> Map.new(fn {otp, entries} ->
+    |> Map.new(fn {otp, otp_entries} ->
       {
         otp,
-        entries
+        otp_entries
         |> Enum.group_by(&get_in(&1, ["target"]))
-        |> Map.new(fn {target, [data | _]} -> {target, data} end)
+        |> Map.new(fn {target, target_entries} ->
+          {
+            target,
+            # Pick the latest available nerves system version.
+            # Sometimes there are 2..4 available version for the same OTP version.
+            target_entries
+            |> Enum.max_by(
+              fn %{"target_version" => target_version} ->
+                NervesSystemsCompatibility.Version.normalize_version(target_version)
+              end,
+              Version
+            )
+          }
+        end)
       }
     end)
   end

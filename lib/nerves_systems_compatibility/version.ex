@@ -50,6 +50,17 @@ defmodule NervesSystemsCompatibility.Version do
     read_lines(Path.join(@versions_dir, "nerves_system_#{target}"))
   end
 
+  @doc """
+  Supplements missing minor and patch values so that the version can be compared.
+  """
+  def normalize_version(version) do
+    case version |> String.split(".") |> length() do
+      1 -> version <> ".0.0"
+      2 -> version <> ".0"
+      3 -> version
+    end
+  end
+
   defp read_lines(file_path) do
     file_path
     |> File.stream!()
