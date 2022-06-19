@@ -1,7 +1,7 @@
-defmodule NervesSystemsCompatibility.Version.VersionTest do
+defmodule NervesSystemsCompatibility.SystemVersionTest do
   use ExUnit.Case, async: true
 
-  import NervesSystemsCompatibility.Version
+  import NervesSystemsCompatibility.SystemVersion
 
   test "otp_versions/0" do
     result = otp_versions()
@@ -13,7 +13,7 @@ defmodule NervesSystemsCompatibility.Version.VersionTest do
     result = nerves_system_versions()
 
     assert is_list(result)
-    assert is_list(result[:rpi0])
+    assert Keyword.fetch!(result, :rpi0) |> is_list()
   end
 
   test "nerves_system_versions/1" do
@@ -22,13 +22,16 @@ defmodule NervesSystemsCompatibility.Version.VersionTest do
     assert is_list(result)
   end
 
-  test "targets/0" do
-    result = targets()
+  test "file_path_to_existing_target_system_atom/1" do
+    assert file_path_to_existing_target_system_atom(
+             Path.join([
+               :code.priv_dir(:nerves_systems_compatibility),
+               "versions",
+               "nerves_system_bbb"
+             ])
+           ) == :bbb
 
-    assert is_list(result)
-    assert :rpi0 in result
-    assert :br not in result
-    assert :otp not in result
+    assert_raise(RuntimeError, fn -> file_path_to_existing_target_system_atom("invalid") end)
   end
 
   test "normalize_version/1" do

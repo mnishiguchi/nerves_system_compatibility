@@ -8,13 +8,13 @@ defmodule NervesSystemsCompatibility.Table do
   """
   @spec build([%{binary => any}]) :: binary
   def build(compatibility_data) do
-    system_targets = NervesSystemsCompatibility.targets()
+    targets = NervesSystemsCompatibility.target_systems()
     otp_versions = NervesSystemsCompatibility.otp_versions()
 
     [
-      header_row(system_targets),
-      divider_row(length(system_targets)),
-      data_rows(system_targets, otp_versions, compatibility_data)
+      header_row(targets),
+      divider_row(targets),
+      data_rows(targets, otp_versions, compatibility_data)
     ]
     |> Enum.join("\n")
   end
@@ -28,10 +28,10 @@ defmodule NervesSystemsCompatibility.Table do
     |> Enum.join()
   end
 
-  defp divider_row(columm_count) when is_integer(columm_count) do
+  defp divider_row(targets) when is_list(targets) do
     [
       "|",
-      [cell("---", 12) | List.duplicate(cell("---"), columm_count)] |> Enum.intersperse("|"),
+      [cell("---", 12) | List.duplicate(cell("---"), length(targets))] |> Enum.intersperse("|"),
       "|"
     ]
     |> Enum.join()

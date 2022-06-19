@@ -1,25 +1,17 @@
-defmodule NervesSystemsCompatibility.Version do
+defmodule NervesSystemsCompatibility.SystemVersion do
   @moduledoc false
 
+  # The directory where all the versions files are located.
   @versions_dir Path.join([:code.priv_dir(:nerves_systems_compatibility), "versions"])
-
+  @otp_file Path.join(@versions_dir, "otp")
+  @nerves_br_file Path.join(@versions_dir, "nerves_br")
   @nerves_system_files Path.join([@versions_dir, "nerves_system_*"]) |> Path.wildcard()
 
-  @targets for file_path <- @nerves_system_files,
-               do:
-                 file_path
-                 |> Path.basename()
-                 |> String.replace_prefix("nerves_system_", "")
-                 |> String.to_atom()
-
-  @spec targets :: [atom]
-  def targets, do: @targets
-
   @spec otp_versions :: [binary]
-  def otp_versions, do: Path.join(@versions_dir, "otp") |> read_lines()
+  def otp_versions, do: read_lines(@otp_file)
 
   @spec nerves_br_versions :: [binary]
-  def nerves_br_versions, do: Path.join(@versions_dir, "nerves_br") |> read_lines()
+  def nerves_br_versions, do: read_lines(@nerves_br_file)
 
   @doc """
   Returns Nerves System versions for all regitered targets.
@@ -28,15 +20,7 @@ defmodule NervesSystemsCompatibility.Version do
   def nerves_system_versions do
     for file_path <- @nerves_system_files, reduce: [] do
       acc ->
-        [
-          {
-            Path.basename(file_path)
-            |> String.replace_prefix("nerves_system_", "")
-            |> String.to_existing_atom(),
-            read_lines(file_path)
-          }
-          | acc
-        ]
+        [{file_path_to_existing_target_system_atom(file_path), read_lines(file_path)} | acc]
     end
     |> Enum.reverse()
   end
@@ -46,7 +30,17 @@ defmodule NervesSystemsCompatibility.Version do
   """
   @spec nerves_system_versions(target :: atom | binary) :: [version :: binary]
   def nerves_system_versions(target) do
-    read_lines(Path.join(@versions_dir, "nerves_system_#{target}"))
+    Enum.find(@nerves_system_files, &String.ends_with?(&1, to_string(target))) |> read_lines()
+  end
+
+  @doc """
+  Converts a valid file path to an existing target atom.
+  """
+  def file_path_to_existing_target_system_atom(file_path) do
+    NervesSystemsCompatibility.target_systems()
+    |> Enum.find(fn target_system ->
+      "#{target_system}" =~ String.replace_prefix(Path.basename(file_path), "nerves_system_", "")
+    end) || raise("invalid file path #{file_path}")
   end
 
   @doc """

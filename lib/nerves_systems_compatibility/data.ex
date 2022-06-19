@@ -2,6 +2,7 @@ defmodule NervesSystemsCompatibility.Data do
   @moduledoc false
 
   alias NervesSystemsCompatibility.API
+  alias NervesSystemsCompatibility.SystemVersion
 
   @type compatibility_data :: [%{binary => any}]
 
@@ -10,11 +11,10 @@ defmodule NervesSystemsCompatibility.Data do
   """
   @spec get :: compatibility_data
   def get do
-    nerves_br_versions = NervesSystemsCompatibility.nerves_br_versions()
     target_to_versions_map = NervesSystemsCompatibility.nerves_system_versions()
 
     nerves_br_version_to_metadata_map =
-      nerves_br_versions
+      NervesSystemsCompatibility.nerves_br_versions()
       |> Enum.map(fn nerves_br_version ->
         Task.async(fn ->
           {nerves_br_version, nerves_br_version_to_metadata(nerves_br_version)}
@@ -77,11 +77,11 @@ defmodule NervesSystemsCompatibility.Data do
           {
             target,
             # Pick the latest available nerves system version.
-            # Sometimes there are 2..4 available version for the same OTP version.
+            # Sometimes there are more than one available versions for the same OTP version.
             target_entries
             |> Enum.max_by(
               fn %{"target_version" => target_version} ->
-                NervesSystemsCompatibility.Version.normalize_version(target_version)
+                SystemVersion.normalize_version(target_version)
               end,
               Version
             )
