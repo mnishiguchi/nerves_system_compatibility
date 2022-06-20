@@ -10,28 +10,21 @@ defmodule NervesSystemsCompatibility.Data do
   """
   @spec get :: compatibility_data
   def get do
-    target_to_versions_map = API.fetch_nerves_system_versions!()
-
     nerves_br_version_to_metadata_map =
       API.fetch_nerves_br_versions!()
-      |> Enum.map(fn nerves_br_version ->
-        Task.async(fn ->
-          {nerves_br_version, nerves_br_version_to_metadata(nerves_br_version)}
-        end)
-      end)
-      |> Task.await_many(:timer.seconds(10))
-      |> Enum.reduce(%{}, fn {nerves_br_version, nerves_br_metadata}, acc ->
-        %{nerves_br_version => nerves_br_metadata} |> Enum.into(acc)
+      |> Task.async_stream(&{&1, nerves_br_version_to_metadata(&1)}, timeout: 10_000)
+      |> Enum.reduce(%{}, fn {:ok, {nerves_br_version, nerves_br_metadata}}, acc ->
+        Map.put(acc, nerves_br_version, nerves_br_metadata)
       end)
 
-    target_to_versions_map
-    |> Enum.map(fn {target, versions} ->
-      Task.async(fn ->
+    API.fetch_nerves_system_versions!()
+    |> Task.async_stream(
+      fn {target, versions} ->
         build_target_metadata(target, versions, nerves_br_version_to_metadata_map)
-      end)
-    end)
-    |> Task.await_many(:timer.seconds(10))
-    |> Enum.reduce([], fn target_metadata, acc -> target_metadata ++ acc end)
+      end,
+      timeout: 10_000
+    )
+    |> Enum.reduce([], fn {:ok, target_metadata}, acc -> target_metadata ++ acc end)
   end
 
   defp build_target_metadata(target, target_versions, %{} = nerves_br_version_to_metadata_map) do
@@ -42,10 +35,8 @@ defmodule NervesSystemsCompatibility.Data do
 
       if metadata_map = nerves_br_version_to_metadata_map[nerves_br_version] do
         metadata_map
-        |> Enum.into(%{
-          "target" => target,
-          "target_version" => target_version
-        })
+        |> Map.put("target", target)
+        |> Map.put("target_version", target_version)
       else
         nil
       end
@@ -59,8 +50,8 @@ defmodule NervesSystemsCompatibility.Data do
       Task.async(API, :fetch_otp_version!, [nerves_br_version])
     ]
     |> Task.await_many(:timer.seconds(10))
-    |> Enum.reduce(%{"nerves_br_version" => nerves_br_version}, fn metadata_map, acc ->
-      metadata_map |> Enum.into(acc)
+    |> Enum.reduce(%{"nerves_br_version" => nerves_br_version}, fn %{} = data, acc ->
+      Map.merge(acc, data)
     end)
   end
 

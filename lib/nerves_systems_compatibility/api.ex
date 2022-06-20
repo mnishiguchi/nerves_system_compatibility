@@ -9,10 +9,8 @@ defmodule NervesSystemsCompatibility.API do
   @spec fetch_nerves_system_versions! :: keyword([binary])
   def fetch_nerves_system_versions! do
     NervesSystemsCompatibility.target_systems()
-    |> Enum.map(fn target ->
-      Task.async(fn -> {target, fetch_nerves_system_versions!(target)} end)
-    end)
-    |> Task.await_many(:timer.seconds(10))
+    |> Task.async_stream(&{&1, fetch_nerves_system_versions!(&1)}, timeout: 10_000)
+    |> Enum.reduce([], fn {:ok, kv}, acc -> [kv | acc] end)
   end
 
   @spec fetch_nerves_system_versions!(binary | atom) :: [binary]
