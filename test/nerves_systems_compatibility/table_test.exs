@@ -1,9 +1,9 @@
 defmodule NervesSystemsCompatibility.TableTest do
   use ExUnit.Case, async: true
-  use NervesSystemsCompatibility.TestHelper.ExVCR
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Finch
 
-  test "build_table", context do
-    use_cassette cassette_name(context) do
+  test "build_table" do
+    use_cassette "api_test" do
       compatibility_data = NervesSystemsCompatibility.get_data()
       result = NervesSystemsCompatibility.Table.build(compatibility_data)
 

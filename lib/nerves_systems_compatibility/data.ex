@@ -2,7 +2,6 @@ defmodule NervesSystemsCompatibility.Data do
   @moduledoc false
 
   alias NervesSystemsCompatibility.API
-  alias NervesSystemsCompatibility.SystemVersion
 
   @type compatibility_data :: [%{binary => any}]
 
@@ -11,10 +10,10 @@ defmodule NervesSystemsCompatibility.Data do
   """
   @spec get :: compatibility_data
   def get do
-    target_to_versions_map = NervesSystemsCompatibility.nerves_system_versions()
+    target_to_versions_map = API.fetch_nerves_system_versions!()
 
     nerves_br_version_to_metadata_map =
-      NervesSystemsCompatibility.nerves_br_versions()
+      API.fetch_nerves_br_versions!()
       |> Enum.map(fn nerves_br_version ->
         Task.async(fn ->
           {nerves_br_version, nerves_br_version_to_metadata(nerves_br_version)}
@@ -41,13 +40,17 @@ defmodule NervesSystemsCompatibility.Data do
         API.fetch_nerves_br_version_for_target!(target, target_version)
         |> Access.fetch!("nerves_br_version")
 
-      nerves_br_version_to_metadata_map
-      |> Access.fetch!(nerves_br_version)
-      |> Enum.into(%{
-        "target" => target,
-        "target_version" => target_version
-      })
+      if metadata_map = nerves_br_version_to_metadata_map[nerves_br_version] do
+        metadata_map
+        |> Enum.into(%{
+          "target" => target,
+          "target_version" => target_version
+        })
+      else
+        nil
+      end
     end
+    |> Enum.reject(&is_nil/1)
   end
 
   defp nerves_br_version_to_metadata(nerves_br_version) do
@@ -79,9 +82,12 @@ defmodule NervesSystemsCompatibility.Data do
             # Pick the latest available nerves system version.
             # Sometimes there are more than one available versions for the same OTP version.
             target_entries
+            |> Enum.reject(fn %{"target_version" => target_version} ->
+              String.match?(target_version, ~r/-rc/)
+            end)
             |> Enum.max_by(
               fn %{"target_version" => target_version} ->
-                SystemVersion.normalize_version(target_version)
+                normalize_version(target_version)
               end,
               Version
             )
@@ -89,5 +95,17 @@ defmodule NervesSystemsCompatibility.Data do
         end)
       }
     end)
+  end
+
+  @doc """
+  Supplements missing minor and patch values so that the version can be compared.
+  """
+  def normalize_version(version) do
+    case version |> String.split(".") |> Enum.count(&String.to_integer/1) do
+      1 -> version <> ".0.0"
+      2 -> version <> ".0"
+      3 -> version
+      _ -> raise("invalid version #{inspect(version)}")
+    end
   end
 end

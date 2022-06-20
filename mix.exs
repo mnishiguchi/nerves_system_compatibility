@@ -8,7 +8,6 @@ defmodule NervesSystemsCompatibility.MixProject do
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: dialyzer()
     ]
   end
@@ -30,9 +29,6 @@ defmodule NervesSystemsCompatibility.MixProject do
       {:req, "~> 0.2"}
     ]
   end
-
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
 
   defp dialyzer() do
     [
