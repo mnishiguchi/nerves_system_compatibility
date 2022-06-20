@@ -12,13 +12,13 @@ defmodule Mix.Tasks.Nerves.System.Compatibility do
       # Print the long content to the shell
       mix nerves.system.compatibility --verbose
 
-      # Print the content to a file
+      # Output to a file
       mix nerves.system.compatibility --output docs/compatibility.md
 
-   ## Command line options
+  ## Command line options
 
-    * `--verbose`, `-v` - Prints documentation
-    * `--output`, `-o` - Output file path
+    * `--verbose`, `-v` - Prints longer documentation
+    * `--output`, `-o` - Outputs to a file
 
   """
 
@@ -40,17 +40,22 @@ defmodule Mix.Tasks.Nerves.System.Compatibility do
 
     {cli_opts, _, _} = OptionParser.parse(args, aliases: @aliases, switches: @switches)
 
-    content =
-      cond do
-        cli_opts[:verbose] -> build_doc()
-        true -> build_table()
-      end
+    content = build_content(cli_opts)
 
     if output = cli_opts[:output] do
+      File.mkdir_p!(Path.dirname(output))
       File.write!(output, content)
       Mix.shell().info("Wrote content to #{output}")
     else
       Mix.shell().info(content)
+    end
+  end
+
+  defp build_content(cli_opts) do
+    if cli_opts[:verbose] do
+      build_doc()
+    else
+      build_table()
     end
   end
 
