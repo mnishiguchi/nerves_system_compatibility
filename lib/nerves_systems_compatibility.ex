@@ -37,40 +37,13 @@ defmodule NervesSystemsCompatibility do
   @spec target_systems :: [atom]
   def target_systems, do: @target_systems
 
-  @spec nerves_br_versions :: [binary]
-  defdelegate nerves_br_versions,
-    to: NervesSystemsCompatibility.API,
-    as: :fetch_nerves_br_versions!
+  def build_table(:table1) do
+    NervesSystemsCompatibility.Data.get()
+    |> NervesSystemsCompatibility.Table1.build()
+  end
 
-  @doc """
-  Returns Nerves System versions for all regitered targets.
-  """
-  @spec nerves_system_versions :: keyword([version :: binary])
-  defdelegate nerves_system_versions,
-    to: NervesSystemsCompatibility.API,
-    as: :fetch_nerves_system_versions!
-
-  @doc """
-  Returns Nerves System versions for one regitered target.
-  """
-  @spec nerves_system_versions(target :: atom | binary) :: [version :: binary]
-  defdelegate nerves_system_versions(target),
-    to: NervesSystemsCompatibility.API,
-    as: :fetch_nerves_system_versions!
-
-  @doc """
-  Returns compatibility data for Nerves Systems.
-  """
-  @spec get_data :: [%{binary => any}]
-  defdelegate get_data,
-    to: NervesSystemsCompatibility.Data,
-    as: :get
-
-  @doc """
-  Converts compatibility data to a markdown table
-  """
-  @spec build_table([%{binary => any}]) :: binary
-  defdelegate build_table(compatibility_data \\ get_data()),
-    to: NervesSystemsCompatibility.Table1,
-    as: :build
+  def build_table(:table2) do
+    NervesSystemsCompatibility.Data.get()
+    |> NervesSystemsCompatibility.Table2.build()
+  end
 end
