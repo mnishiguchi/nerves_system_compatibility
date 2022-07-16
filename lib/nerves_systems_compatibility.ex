@@ -71,6 +71,6 @@ defmodule NervesSystemsCompatibility do
   """
   @spec build_table([%{binary => any}]) :: binary
   defdelegate build_table(compatibility_data \\ get_data()),
-    to: NervesSystemsCompatibility.Table,
+    to: NervesSystemsCompatibility.Table1,
     as: :build
 end

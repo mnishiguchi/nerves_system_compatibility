@@ -73,19 +73,51 @@ defmodule NervesSystemsCompatibility.Data do
             # Pick the latest available nerves system version.
             # Sometimes there are more than one available versions for the same OTP version.
             target_entries
-            |> Enum.reject(fn %{"target_version" => target_version} ->
-              String.match?(target_version, ~r/-rc/)
-            end)
-            |> Enum.max_by(
-              fn %{"target_version" => target_version} ->
-                normalize_version(target_version)
-              end,
-              Version
-            )
+            |> Enum.reject(&String.match?(&1["target_version"], ~r/-rc/))
+            |> Enum.max_by(&normalize_version(&1["target_version"]), Version)
           }
         end)
       }
     end)
+  end
+
+  @doc """
+  Groups the compatibility data by target name.
+  """
+  @spec group_data_by_target(compatibility_data) :: %{binary => %{atom => any}}
+  def group_data_by_target(compatibility_data) do
+    compatibility_data
+    |> Enum.group_by(&Map.fetch!(&1, "target"))
+    |> Map.new(fn {target, target_entries} ->
+      {
+        target,
+        target_entries
+        |> Enum.reject(&String.match?(&1["target_version"], ~r/-rc/))
+        |> Enum.group_by(&Map.fetch!(&1, "target_version"))
+        |> Map.new(fn {target_version, target_version_entries} ->
+          {
+            target_version,
+            target_version_entries
+            |> Enum.max_by(&normalize_version(&1["target_version"]), Version)
+          }
+        end)
+      }
+    end)
+  end
+
+  @spec filter_by(compatibility_data, any, any) :: compatibility_data
+  def filter_by(compatibility_data, key, value) do
+    compatibility_data |> Enum.filter(&Kernel.==(&1[key], value))
+  end
+
+  @spec list_target_system_versions(compatibility_data, atom) :: [binary]
+  def list_target_system_versions(compatibility_data, target) do
+    compatibility_data
+    |> filter_by("target", target)
+    |> Enum.map(&Access.fetch!(&1, "target_version"))
+    |> Enum.reject(&String.match?(&1, ~r/-rc/))
+    |> Enum.uniq()
+    |> Enum.sort({:desc, Version})
   end
 
   @doc """
