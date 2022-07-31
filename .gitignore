@@ -20,9 +20,13 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-nerves_systems_compatibility-*.tar
+nerves_system_compatibility-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
 
 .envrc
+
+_nerves_system_info
+scripts
+test/vcr_cassettes

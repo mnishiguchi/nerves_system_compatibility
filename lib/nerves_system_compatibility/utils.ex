@@ -1,4 +1,4 @@
-defmodule NervesSystemsCompatibility.Utils do
+defmodule NervesSystemCompatibility.Utils do
   @moduledoc false
 
   @doc """
@@ -78,5 +78,17 @@ defmodule NervesSystemsCompatibility.Utils do
   """
   def pad_table_cell(value, count \\ 10) do
     String.pad_trailing(" #{value}", count)
+  end
+
+  @doc """
+  Supplements missing minor and patch values so that the version can be compared.
+  """
+  def normalize_version(version) do
+    case version |> String.split(".") |> Enum.count(&String.to_integer/1) do
+      1 -> version <> ".0.0"
+      2 -> version <> ".0"
+      3 -> version
+      _ -> raise("invalid version #{inspect(version)}")
+    end
   end
 end

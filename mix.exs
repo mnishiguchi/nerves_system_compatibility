@@ -1,9 +1,9 @@
-defmodule NervesSystemsCompatibility.MixProject do
+defmodule NervesSystemCompatibility.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :nerves_systems_compatibility,
+      app: :nerves_system_compatibility,
       version: "0.1.0",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,

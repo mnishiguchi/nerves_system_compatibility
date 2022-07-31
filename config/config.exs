@@ -2,7 +2,8 @@ import Config
 
 # When authenticating, you should see your rate limit bumped to 5,000 requests an hour, as indicated in the X-RateLimit-Limit header.
 # See https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api#authentication
-config :nerves_systems_compatibility, github_api_token: System.get_env("GITHUB_API_TOKEN")
+config :nerves_system_compatibility,
+  github_api_token: System.get_env("GITHUB_API_TOKEN")
 
 if Mix.env() == :test do
   # https://github.com/parroty/exvcr
