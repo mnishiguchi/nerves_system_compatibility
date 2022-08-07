@@ -19,7 +19,7 @@ defmodule NervesSystemsCompatibility do
     25.0
   ]
 
-  @target_systems ~w[
+  @targets ~w[
     bbb
     osd32mp1
     rpi
@@ -31,46 +31,35 @@ defmodule NervesSystemsCompatibility do
     x86_64
   ]a
 
+  alias NervesSystemsCompatibility.Data
+  alias NervesSystemsCompatibility.Table1
+  alias NervesSystemsCompatibility.Table2
+
   @spec otp_versions :: [binary]
   def otp_versions, do: @otp_versions
 
   @spec target_systems :: [atom]
-  def target_systems, do: @target_systems
+  def target_systems, do: @targets
 
-  @spec nerves_br_versions :: [binary]
-  defdelegate nerves_br_versions,
-    to: NervesSystemsCompatibility.API,
-    as: :fetch_nerves_br_versions!
+  @spec build_table(:table1) :: iodata
+  def build_table(:table1) do
+    Table1.build(Data.get())
+  end
 
-  @doc """
-  Returns Nerves System versions for all regitered targets.
-  """
-  @spec nerves_system_versions :: keyword([version :: binary])
-  defdelegate nerves_system_versions,
-    to: NervesSystemsCompatibility.API,
-    as: :fetch_nerves_system_versions!
+  @spec build_table(:table2) :: [{atom, iodata}]
+  def build_table(:table2) do
+    compatibility_data = Data.get()
+    data_by_target = Data.group_data_by_target(compatibility_data)
 
-  @doc """
-  Returns Nerves System versions for one regitered target.
-  """
-  @spec nerves_system_versions(target :: atom | binary) :: [version :: binary]
-  defdelegate nerves_system_versions(target),
-    to: NervesSystemsCompatibility.API,
-    as: :fetch_nerves_system_versions!
-
-  @doc """
-  Returns compatibility data for Nerves Systems.
-  """
-  @spec get_data :: [%{binary => any}]
-  defdelegate get_data,
-    to: NervesSystemsCompatibility.Data,
-    as: :get
-
-  @doc """
-  Converts compatibility data to a markdown table
-  """
-  @spec build_table([%{binary => any}]) :: binary
-  defdelegate build_table(compatibility_data \\ get_data()),
-    to: NervesSystemsCompatibility.Table,
-    as: :build
+    for target <- @targets do
+      {
+        target,
+        Table2.build(
+          target,
+          Access.fetch!(data_by_target, target),
+          Data.list_target_system_versions(compatibility_data, target)
+        )
+      }
+    end
+  end
 end

@@ -82,7 +82,6 @@ defmodule Mix.Tasks.Nerves.System.Compatibility do
   end
 
   defp build_table do
-    NervesSystemsCompatibility.get_data()
-    |> NervesSystemsCompatibility.build_table()
+    NervesSystemsCompatibility.build_table(:table1)
   end
 end
