@@ -4,8 +4,8 @@ defmodule NervesSystemCompatibility.API do
   The results is cached.
   """
 
-  @github_api_url "https://api.github.com"
-  @github_raw_url "https://raw.githubusercontent.com"
+  @github_api_req Req.new(base_url: "https://api.github.com", cache: true)
+  @github_raw_req Req.new(base_url: "https://raw.githubusercontent.com", cache: true)
 
   @spec get_nerves_system_br_versions :: [binary]
   def get_nerves_system_br_versions(opts \\ []) do
@@ -29,9 +29,9 @@ defmodule NervesSystemCompatibility.API do
 
   defp get_package_versions(project_name, opts) do
     requirement = opts[:requirement] || ">= 0.1.0"
-    url = "#{@github_api_url}/repos/nerves-project/#{project_name}/git/refs/tags"
+    url = "repos/nerves-project/#{project_name}/git/refs/tags"
 
-    case Req.get!(url, headers: github_api_headers(), cache: true) do
+    case Req.get!(@github_api_req, url: url, headers: github_api_headers()) do
       %{status: 200, body: tags} ->
         for %{"ref" => "refs/tags/v" <> version} <- tags, Version.match?(version, requirement) do
           version
@@ -58,10 +58,9 @@ defmodule NervesSystemCompatibility.API do
   end
 
   defp get_buildroot_version_from_create_build(nerves_br_version) do
-    url =
-      "#{@github_raw_url}/nerves-project/nerves_system_br/v#{nerves_br_version}/create-build.sh"
+    url = "nerves-project/nerves_system_br/v#{nerves_br_version}/create-build.sh"
 
-    case Req.get!(url, cache: true) do
+    case Req.get!(@github_raw_req, url: url) do
       %{status: 200, body: create_build_content} ->
         captures =
           Regex.named_captures(
@@ -95,9 +94,9 @@ defmodule NervesSystemCompatibility.API do
 
   def get_otp_version_from_patch(nerves_br_version) do
     url =
-      "#{@github_api_url}/repos/nerves-project/nerves_system_br/git/trees/v#{nerves_br_version}?recursive=1"
+      "repos/nerves-project/nerves_system_br/git/trees/v#{nerves_br_version}?recursive=1"
 
-    case Req.get!(url, headers: github_api_headers(), cache: true) do
+    case Req.get!(@github_api_req, url: url, headers: github_api_headers()) do
       %{status: 200, body: %{"tree" => tree}} ->
         joint_paths =
           tree
@@ -131,9 +130,9 @@ defmodule NervesSystemCompatibility.API do
           raise "no dockerfile before 0.16.2"
       end
 
-    url = "#{@github_raw_url}/nerves-project/nerves_system_br/v#{nerves_br_version}/#{path}"
+    url = "nerves-project/nerves_system_br/v#{nerves_br_version}/#{path}"
 
-    case Req.get!(url, cache: true) do
+    case Req.get!(@github_raw_req, url: url) do
       %{status: 200, body: dockerfile_content} ->
         captures =
           [
@@ -157,10 +156,9 @@ defmodule NervesSystemCompatibility.API do
   end
 
   def get_otp_version_from_tool_versions(nerves_br_version) do
-    url =
-      "#{@github_raw_url}/nerves-project/nerves_system_br/v#{nerves_br_version}/.tool-versions"
+    url = "nerves-project/nerves_system_br/v#{nerves_br_version}/.tool-versions"
 
-    with %{status: 200, body: tool_versions_content} <- Req.get!(url, cache: true),
+    with %{status: 200, body: tool_versions_content} <- Req.get!(@github_raw_req, url: url),
          %{"otp_version" => otp_version} <-
            Regex.named_captures(
              ~r/erlang (?<otp_version>[0-9.]*)/,
@@ -203,9 +201,9 @@ defmodule NervesSystemCompatibility.API do
 
   @spec get_nerves_br_version_for_target(binary | atom, binary) :: binary | nil
   def get_nerves_br_version_for_target(target, target_version) do
-    url = "#{@github_raw_url}/nerves-project/nerves_system_#{target}/v#{target_version}/mix.lock"
+    url = "nerves-project/nerves_system_#{target}/v#{target_version}/mix.lock"
 
-    with %{status: 200, body: mix_lock_content} <- Req.get!(url, cache: true),
+    with %{status: 200, body: mix_lock_content} <- Req.get!(@github_raw_req, url: url),
          %{"nerves_br_version" => nerves_br_version} <-
            Regex.named_captures(
              ~r/:hex, :nerves_system_br, "(?<nerves_br_version>[0-9.]*)"/,
@@ -220,10 +218,9 @@ defmodule NervesSystemCompatibility.API do
 
   @spec get_linux_version_for_target(binary | atom, binary) :: binary | nil
   def get_linux_version_for_target(target, target_version) do
-    url =
-      "#{@github_raw_url}/nerves-project/nerves_system_#{target}/v#{target_version}/nerves_defconfig"
+    url = "nerves-project/nerves_system_#{target}/v#{target_version}/nerves_defconfig"
 
-    case Req.get!(url, cache: true) do
+    case Req.get!(@github_raw_req, url: url) do
       %{status: 200, body: defconfig_content} ->
         captures =
           [
@@ -248,18 +245,18 @@ defmodule NervesSystemCompatibility.API do
 
   def get_github_release(target, version \\ nil) do
     tag = if version, do: "v#{version}", else: :latest
-    url = "#{@github_api_url}/repos/nerves-project/nerves_system_#{target}/releases/tags/#{tag}"
+    url = "repos/nerves-project/nerves_system_#{target}/releases/tags/#{tag}"
 
-    case Req.get!(url, headers: github_api_headers(), cache: true) do
+    case Req.get!(@github_api_req, url: url, headers: github_api_headers()) do
       %{status: 200, body: github_release} -> github_release
       _ -> nil
     end
   end
 
   def get_github_releases(target) do
-    url = "#{@github_api_url}/repos/nerves-project/nerves_system_#{target}/releases"
+    url = "repos/nerves-project/nerves_system_#{target}/releases"
 
-    case Req.get!(url, headers: github_api_headers(), cache: true) do
+    case Req.get!(@github_api_req, url: url, headers: github_api_headers()) do
       %{status: 200, body: github_releases} -> github_releases
       nil -> nil
     end
