@@ -3,7 +3,7 @@ defmodule NervesSystemCompatibility do
   Documentation for `NervesSystemCompatibility`.
   """
 
-  @targets ~w[
+  @nerves_targets ~w[
     bbb
     osd32mp1
     rpi
@@ -13,72 +13,145 @@ defmodule NervesSystemCompatibility do
     rpi3a
     rpi4
     x86_64
+    grisp2
   ]a
 
   alias NervesSystemCompatibility.Database
-  alias NervesSystemCompatibility.Table3
+  alias NervesSystemCompatibility.Repo
+  alias NervesSystemCompatibility.Utils
 
-  @spec target_systems :: [atom]
-  def target_systems, do: @targets
+  @spec nerves_targets :: [atom]
+  def nerves_targets, do: @nerves_targets
 
-  @spec build_table :: :ok
-  def build_table do
-    data = get_data_from_database()
+  @column_labels ["", "Nerves System BR", "Erlang/OTP", "Buildroot", "Linux"]
+  @row_opts [column_width: 20]
 
-    data_by_target =
-      data
-      |> Enum.group_by(& &1.target)
-      |> Enum.map(fn {target, data} ->
-        {target,
-         Enum.group_by(data, & &1.version)
-         |> Enum.map(fn {version, [entry]} -> {version, entry} end)
-         |> Enum.sort_by(fn {version, _} -> version end, {:desc, Version})}
-      end)
+  def build_chart(opts \\ []) do
+    chart_dir = opts[:chart_dir] || "tmp/nerves_system_compatibility"
+    chart_format = opts[:format] || :markdown
 
-    html =
-      for target <- @targets do
-        table_html =
-          Table3.build(Access.fetch!(data_by_target, target))
-          |> to_string()
-          |> Earmark.as_html!()
+    chart =
+      for target <- @nerves_targets do
+        build_chart_for_target(target, opts)
+      end
+      |> Enum.join("\n\n")
 
-        "<details><summary>nerves_system_#{target}</summary>#{table_html}</details>"
-        |> String.replace(~r/>\s+/, ">")
-        |> String.replace(~r/\s+</, "<")
-        |> String.replace(~r/ style="text-align: left;"/, "")
+    File.mkdir_p(chart_dir)
+    file = "#{chart_dir}/nerves_system_compatibility_#{System.os_time(:second)}.#{chart_format}"
+    IO.puts("writing the Nerves system compatibility information to #{file}")
+    File.write!(file, chart)
+  end
+
+  def build_chart_for_target(target, opts \\ []) do
+    Database.open()
+
+    header = [
+      Utils.table_row([target | tl(@column_labels)], @row_opts),
+      Utils.divider_row(length(@column_labels), @row_opts)
+    ]
+
+    data_rows =
+      for version <- Database.get({target, :versions}) do
+        data = get_data_for_target(target, version)
+
+        values = [
+          version,
+          data.nerves_system_br_version,
+          data.otp_version,
+          data.buildroot_version,
+          data.linux_version
+        ]
+
+        Utils.table_row(values, @row_opts)
       end
 
-    File.mkdir("tmp")
-    file = "tmp/nerves_system_compatibility_#{DateTime.to_unix(DateTime.utc_now())}.html"
-    IO.puts("writing the Nerves system compatibility information to #{file}")
-    File.write!(file, html)
+    markdown_chart = (header ++ data_rows) |> Enum.join("\n")
+
+    case opts[:format] do
+      :html ->
+        "<details><summary>nerves_system_#{target}</summary>#{markdown_chart_to_html(markdown_chart)}</details>"
+
+      _ ->
+        markdown_chart
+    end
+  end
+
+  defp markdown_chart_to_html(markdown_chart) do
+    markdown_chart
+    |> Earmark.as_html!()
+    |> String.replace(~r/ style="text-align: left;"/, "")
+    |> String.replace(~r/>\s+/, ">")
+    |> String.replace(~r/\s+</, "<")
   end
 
   @doc """
   Returns compatibility data for Nerves Systems.
   """
-  @spec get_data_from_database :: [%{binary => any}]
-  def get_data_from_database do
-    db = %Database{}
+  @spec get_data :: [%{atom => String.t()}]
+  def get_data do
+    Database.open()
 
-    Database.NervesSystemTarget.get(db)
-    |> Enum.map(fn nerves_system_target ->
-      nerves_system_br =
-        Database.NervesSystemBr.get(db, nerves_system_target.nerves_system_br_version)
-
-      nerves_system_target
-      |> Map.put(:buildroot_version, nerves_system_br.buildroot_version || :unknown)
-      |> Map.put(:otp_version, nerves_system_br.otp_version || :unknown)
-    end)
+    for target <- @nerves_targets,
+        version <- Database.get({target, :versions}) do
+      get_data_for_target(target, version)
+    end
   end
 
-  @doc """
-  Builds nerves system info database in the local filesystem.
-  """
+  defp get_data_for_target(target, version) do
+    nerves_system_br_version = Database.get({target, version, :nerves_system_br_version})
+
+    %{
+      target: target,
+      version: version,
+      nerves_system_br_version: nerves_system_br_version,
+      linux_version: Database.get({target, version, :linux_version}),
+      buildroot_version: Database.get({:br, nerves_system_br_version, :buildroot_version}),
+      otp_version: Database.get({:br, nerves_system_br_version, :otp_version})
+    }
+  end
+
   def build_database! do
-    db = %Database{}
-    Database.NervesSystemBr.update(db)
-    Database.NervesSystemTarget.update_nerves_system_br_versions(db)
-    Database.NervesSystemTarget.update_linux_versions(db)
+    Database.open()
+    Repo.download_nerves_system_repos()
+
+    nerves_system_br_versions = Repo.get_nerves_system_br_versions()
+    Database.put({:br, :versions}, nerves_system_br_versions)
+
+    # Make sure database is accessed sequentially (do not use async tasks)
+    for target <- @nerves_targets do
+      versions = Repo.get_nerves_system_versions(target)
+      Database.put({target, :versions}, versions)
+
+      for version <- versions do
+        Database.put(
+          {target, version, :nerves_system_br_version},
+          Repo.get_nerves_system_br_versions_for_target(target, version)
+        )
+
+        Database.put(
+          {target, version, :linux_version},
+          Repo.get_linux_version_for_target(target, version)
+        )
+
+        IO.write(".")
+      end
+    end
+
+    for nerves_system_br_version <- nerves_system_br_versions do
+      Database.put(
+        {:br, nerves_system_br_version, :buildroot_version},
+        Repo.get_buildroot_version(nerves_system_br_version)
+      )
+
+      Database.put(
+        {:br, nerves_system_br_version, :otp_version},
+        Repo.get_otp_version(nerves_system_br_version)
+      )
+
+      IO.write(".")
+    end
+
+    IO.write("\n")
+    :ok
   end
 end
