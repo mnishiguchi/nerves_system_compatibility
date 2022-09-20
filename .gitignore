@@ -26,7 +26,4 @@ nerves_system_compatibility-*.tar
 /tmp/
 
 .envrc
-
-_nerves_system_info
 scripts
-test/vcr_cassettes

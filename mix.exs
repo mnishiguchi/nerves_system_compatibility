@@ -24,9 +24,6 @@ defmodule NervesSystemCompatibility.MixProject do
     [
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:exvcr, "~> 0.11", only: :test},
-      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false},
-      {:req, "~> 0.3.0"},
       {:earmark, "~> 1.4.0"}
     ]
   end

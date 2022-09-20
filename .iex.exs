@@ -1,9 +1,6 @@
 import_file_if_available("~/.iex.exs")
 
 import_if_available(NervesSystemCompatibility)
-alias NervesSystemCompatibility.API
 alias NervesSystemCompatibility.Database
-alias NervesSystemCompatibility.Database.NervesSystemBr
-alias NervesSystemCompatibility.Database.NervesSystemTarget
-alias NervesSystemCompatibility.Linux
+alias NervesSystemCompatibility.Repo
 alias NervesSystemCompatibility.Utils
