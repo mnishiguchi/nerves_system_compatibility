@@ -3,70 +3,17 @@ defmodule NervesSystemCompatibility.ReoiTest do
   alias NervesSystemCompatibility.Repo
 
   test "download_nerves_system_repo/1" do
-    assert {:error, _} = Repo.download_nerves_system_repo("invalid_repo")
-  end
-
-  test "download_dir/0" do
-    assert Repo.download_dir() == "tmp/data/repos"
-  end
-
-  test "nerves_system_repo_dir/1" do
-    assert Repo.nerves_system_repo_dir(:rpi0) == "tmp/data/repos/nerves_system_rpi0"
-    assert Repo.nerves_system_repo_dir(:bbb) == "tmp/data/repos/nerves_system_bbb"
+    assert_raise(RuntimeError, fn ->
+      Repo.download_nerves_system_repo("invalid_repo")
+    end)
   end
 
   test "get_nerves_system_target_versions/1" do
     result = Repo.get_nerves_system_target_versions([:bbb, :rpi0])
     assert %{bbb: _, rpi0: _} = result
 
-    assert [
-             "2.15.2",
-             "2.15.1",
-             "2.15.0",
-             "2.14.0",
-             "2.13.4",
-             "2.13.3",
-             "2.13.2",
-             "2.13.1",
-             "2.13.0",
-             "2.12.3",
-             "2.12.2",
-             "2.12.1",
-             "2.12.0",
-             "2.11.2",
-             "2.11.1",
-             "2.11.0",
-             "2.10.1",
-             "2.10.0",
-             "2.9.0",
-             "2.8.3"
-             | _rest
-           ] = result[:bbb]
-  end
-
-  test "get_nerves_system_br_versions_for_targets/1" do
-    assert %{
-             {:bbb, "2.12.3"} => "1.17.4",
-             {:bbb, "2.13.0"} => "1.18.2",
-             {:bbb, "2.13.1"} => "1.18.3",
-             {:bbb, "2.13.2"} => "1.18.4",
-             {:bbb, "2.13.3"} => "1.18.5",
-             {:bbb, "2.13.4"} => "1.18.6",
-             {:bbb, "2.14.0"} => "1.19.0",
-             {:bbb, "2.15.0"} => "1.20.3",
-             {:bbb, "2.15.1"} => "1.20.3",
-             {:bbb, "2.15.2"} => "1.20.4",
-             {:rpi0, "1.17.2"} => "1.17.3",
-             {:rpi0, "1.17.3"} => "1.17.4",
-             {:rpi0, "1.18.0"} => "1.18.2",
-             {:rpi0, "1.18.1"} => "1.18.3",
-             {:rpi0, "1.18.2"} => "1.18.4",
-             {:rpi0, "1.18.3"} => "1.18.5",
-             {:rpi0, "1.18.4"} => "1.18.6",
-             {:rpi0, "1.19.0"} => "1.19.0",
-             {:rpi0, "1.20.0"} => "1.20.3",
-             {:rpi0, "1.20.1"} => "1.20.4"
-           } = Repo.get_nerves_system_br_versions_for_targets([:bbb, :rpi0])
+    assert is_list(result[:bbb])
+    assert length(result[:bbb]) == 50
   end
 
   test "get_buildroot_version/1" do
@@ -84,5 +31,14 @@ defmodule NervesSystemCompatibility.ReoiTest do
 
   test "get_linux_version_for_target/2" do
     assert Repo.get_linux_version_for_target(:rpi, "1.20.0") == "5.15"
+  end
+
+  test "normalize_version/1" do
+    assert Repo.normalize_version("25") == "25.0.0"
+    assert Repo.normalize_version("25.0") == "25.0.0"
+    assert Repo.normalize_version("25.0.0") == "25.0.0"
+    assert_raise(ArgumentError, fn -> Repo.normalize_version("") end)
+    assert_raise(ArgumentError, fn -> Repo.normalize_version("invalid") end)
+    assert_raise(RuntimeError, fn -> Repo.normalize_version("25.0.0.0") end)
   end
 end
